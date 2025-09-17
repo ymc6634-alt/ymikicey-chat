@@ -1,5 +1,0 @@
-flask
-flask-session
-python-dotenv
-openai
-gunicorn
