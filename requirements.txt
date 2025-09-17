@@ -1,3 +1,6 @@
 flask
 gunicorn
 Flask-Session
+requests
+openai
+python-dotenv
