@@ -6,15 +6,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Survey Overlay -->
+    <!-- ==================== SURVEY OVERLAY ==================== -->
     <div id="survey-overlay" class="overlay">
         <div class="survey-box">
             <h2>📝 Quick Survey</h2>
             <p>Before we start, tell me a bit:</p>
+
             <label>Why are you gonna use this AI bot?</label>
             <input type="text" id="survey-why" placeholder="For fun, learning, etc.">
+
             <label>Where did you hear about it?</label>
             <input type="text" id="survey-source" placeholder="Friend, internet, etc.">
+
             <div class="survey-buttons">
                 <button id="survey-submit" class="start">✅ Start Chatting</button>
                 <button id="survey-skip" class="skip">⏭️ Skip</button>
@@ -22,7 +25,7 @@
         </div>
     </div>
 
-    <!-- Feedback Popup -->
+    <!-- ==================== FEEDBACK POPUP ==================== -->
     <div id="feedback-popup" class="overlay" style="display:none;">
         <div class="survey-box">
             <h2>💭 Feedback</h2>
@@ -32,10 +35,26 @@
         </div>
     </div>
 
-    <div class="chat-container">
-        <div class="welcome-banner" id="welcome-banner">🌟 Hey, welcome! I'm <span class="glow">YMIKICEY</span>. Let’s chat!</div>
+    <!-- ==================== SETTINGS POPUP ==================== -->
+    <div id="settings-popup" class="overlay" style="display:none;">
+        <div class="survey-box">
+            <h2>⚙️ Settings</h2>
+            <p>Choose your chat style:</p>
+            <button class="style-btn" data-style="fun">🎉 Fun / Gamer</button>
+            <button class="style-btn" data-style="clean">✨ Clean / Minimal</button>
+            <button class="style-btn" data-style="default">🔄 Default</button>
+            <br><br>
+            <button id="settings-close">❌ Close</button>
+        </div>
+    </div>
 
-        <!-- Creator login box -->
+    <!-- ==================== CHAT CONTAINER ==================== -->
+    <div class="chat-container">
+        <div class="welcome-banner" id="welcome-banner">
+            🌟 Hey, welcome! I'm <span class="glow">YMIKICEY</span>. Let’s chat!
+        </div>
+
+        <!-- Creator login -->
         <div class="creator-login">
             <input type="password" id="creator-code" placeholder="Creator password">
             <button id="creator-btn">👑 Verify</button>
@@ -53,18 +72,26 @@
             <button id="upload-btn">📤 Send Screenshot</button>
         </div>
 
+        <!-- Extra controls -->
+        <div class="extra-controls">
+            <button id="theme-btn">🎨 Theme</button>
+            <button id="darkmode-btn">🌙 Dark/Light</button>
+            <button id="settings-btn">⚙️ Settings</button>
+        </div>
+
         <!-- Messages -->
         <div class="chat-messages" id="chat-messages"></div>
 
-        <!-- Input bar (sticks to bottom) -->
+        <!-- Input -->
         <div class="chat-input">
+            <button id="emoji-btn">😊</button>
             <textarea id="message-input" placeholder="Type a message..." rows="1"></textarea>
             <button id="send-btn">Enter</button>
         </div>
     </div>
 
+    <!-- ==================== JAVASCRIPT ==================== -->
     <script>
-        // JS logic unchanged (same as before)
         let mode = "chat";
         let isCreator = false;
 
@@ -75,44 +102,44 @@
         const creatorBtn = document.getElementById("creator-btn");
         const creatorInput = document.getElementById("creator-code");
         const banner = document.getElementById("welcome-banner");
+        const sendBtn = document.getElementById("send-btn");
+        const messageInput = document.getElementById("message-input");
+        const chatMessages = document.getElementById("chat-messages");
 
+        /* ---------- Mode Toggle ---------- */
         chatBtn.addEventListener("click", () => {
             mode = "chat";
             chatBtn.classList.add("active");
             imgBtn.classList.remove("active");
         });
-
         imgBtn.addEventListener("click", () => {
             mode = "image";
             imgBtn.classList.add("active");
             chatBtn.classList.remove("active");
         });
 
-        const sendBtn = document.getElementById("send-btn");
-        const messageInput = document.getElementById("message-input");
-        const chatMessages = document.getElementById("chat-messages");
-
+        /* ---------- Add Message ---------- */
         function addMessage(sender, text, isHtml = false) {
             const msgDiv = document.createElement("div");
+            msgDiv.classList.add("message", sender, "fade-in");
 
             if (sender === "bot" && isCreator) {
-                msgDiv.classList.add("message", "bot", "creator-bot");
-            } else {
-                msgDiv.classList.add("message", sender);
+                msgDiv.classList.add("creator-bot");
             }
-
             if (isHtml) msgDiv.innerHTML = text;
             else msgDiv.textContent = text;
 
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
+
+            if (sender === "bot") playSound();
         }
 
+        /* ---------- Typing Indicator ---------- */
         function showTyping() {
             const typingDiv = document.createElement("div");
             typingDiv.classList.add("message", "bot", "typing-indicator");
             typingDiv.innerHTML = `
-                <span class="glow">Y</span>
                 <div class="typing">
                     <span class="typing-dot"></span>
                     <span class="typing-dot"></span>
@@ -123,6 +150,7 @@
             return typingDiv;
         }
 
+        /* ---------- Send Message ---------- */
         async function sendMessage() {
             const msg = messageInput.value.trim();
             if (!msg) return;
@@ -146,39 +174,34 @@
                 typeWriter("bot", data.reply, 15);
             }
         }
+        sendBtn.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keydown", e => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
+        /* ---------- Upload ---------- */
         uploadBtn.addEventListener("click", async () => {
             const file = fileInput.files[0];
             if (!file) return alert("Please select an image first!");
-
             addMessage("user", `[Uploaded Screenshot: ${file.name}]`);
-
             const typingDiv = showTyping();
-
             const formData = new FormData();
             formData.append("file", file);
             formData.append("mode", "vision");
-
-            const response = await fetch("/send_message", {
-                method: "POST",
-                body: formData
-            });
-
+            const response = await fetch("/send_message", { method: "POST", body: formData });
             const data = await response.json();
             typingDiv.remove();
-
             typeWriter("bot", data.reply, 15);
         });
 
+        /* ---------- Typewriter ---------- */
         function typeWriter(sender, text, speed) {
             const msgDiv = document.createElement("div");
-
-            if (sender === "bot" && isCreator) {
-                msgDiv.classList.add("message", "bot", "creator-bot");
-            } else {
-                msgDiv.classList.add("message", sender);
-            }
-
+            msgDiv.classList.add("message", sender, "fade-in");
+            if (sender === "bot" && isCreator) msgDiv.classList.add("creator-bot");
             chatMessages.appendChild(msgDiv);
 
             let i = 0;
@@ -191,18 +214,18 @@
                 }
             }
             typing();
+            if (sender === "bot") playSound();
         }
 
+        /* ---------- Creator Login ---------- */
         creatorBtn.addEventListener("click", async () => {
             const code = creatorInput.value.trim();
             if (!code) return;
-
             const response = await fetch("/identify_creator", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `code=${encodeURIComponent(code)}`
             });
-
             const data = await response.json();
             if (data.status === "success") {
                 isCreator = true;
@@ -214,21 +237,12 @@
             }
         });
 
-        sendBtn.addEventListener("click", sendMessage);
-        messageInput.addEventListener("keydown", function(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Survey Logic
+        /* ---------- Survey ---------- */
         const surveyOverlay = document.getElementById("survey-overlay");
         const surveySubmit = document.getElementById("survey-submit");
         const surveySkip = document.getElementById("survey-skip");
         const whyInput = document.getElementById("survey-why");
         const sourceInput = document.getElementById("survey-source");
-
         document.querySelector(".chat-container").style.display = "none";
 
         async function submitSurvey(data) {
@@ -239,26 +253,16 @@
             });
             surveyOverlay.style.display = "none";
             document.querySelector(".chat-container").style.display = "flex";
-
-            setTimeout(() => {
-                document.getElementById("feedback-popup").style.display = "flex";
-            }, 5 * 60 * 1000);
+            setTimeout(() => { document.getElementById("feedback-popup").style.display = "flex"; }, 5*60*1000);
         }
-
         surveySubmit.addEventListener("click", () => {
-            submitSurvey({
-                why: whyInput.value || "Not provided",
-                source: sourceInput.value || "Not provided"
-            });
+            submitSurvey({ why: whyInput.value || "Not provided", source: sourceInput.value || "Not provided" });
         });
-
         surveySkip.addEventListener("click", () => {
-            submitSurvey({
-                why: "Skipped",
-                source: "Skipped"
-            });
+            submitSurvey({ why: "Skipped", source: "Skipped" });
         });
 
+        /* ---------- Feedback ---------- */
         document.querySelectorAll(".feedback-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 await fetch("/feedback", {
@@ -267,6 +271,96 @@
                     body: JSON.stringify({ feedback: btn.dataset.feedback })
                 });
                 document.getElementById("feedback-popup").style.display = "none";
+            });
+        });
+
+        /* ---------- Dark/Light Mode ---------- */
+        const darkBtn = document.getElementById("darkmode-btn");
+        darkBtn.addEventListener("click", () => {
+            document.body.classList.toggle("light-mode");
+            if (document.body.classList.contains("light-mode")) {
+                localStorage.setItem("darkMode", "light");
+            } else {
+                localStorage.setItem("darkMode", "dark");
+            }
+        });
+
+        /* ---------- Theme Switcher ---------- */
+        const themeBtn = document.getElementById("theme-btn");
+        const themes = ["blue", "purple", "green", "sunset"];
+        let themeIndex = 0;
+        themeBtn.addEventListener("click", () => {
+            document.body.classList.remove(...themes);
+            themeIndex = (themeIndex + 1) % themes.length;
+            const newTheme = themes[themeIndex];
+            document.body.classList.add(newTheme);
+            localStorage.setItem("theme", newTheme);
+        });
+
+        /* ---------- Emoji Picker ---------- */
+        const emojiBtn = document.getElementById("emoji-btn");
+        emojiBtn.addEventListener("click", () => {
+            const emojis = ["😀","😂","😍","🤔","😎","🔥","👍","🎉","💡","🤖"];
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            messageInput.value += emoji;
+            messageInput.focus();
+        });
+
+        /* ---------- Sound ---------- */
+        function playSound() {
+            const audio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c27b39c6d3.mp3?filename=pop-94319.mp3");
+            audio.play();
+        }
+
+        /* ---------- Settings (with persistence) ---------- */
+        const settingsBtn = document.getElementById("settings-btn");
+        const settingsPopup = document.getElementById("settings-popup");
+        const settingsClose = document.getElementById("settings-close");
+
+        // Apply saved preferences on load
+        window.addEventListener("load", () => {
+            // Style
+            const savedStyle = localStorage.getItem("chatStyle");
+            if (savedStyle === "fun") {
+                document.body.classList.add("fun-style");
+            } else if (savedStyle === "clean") {
+                document.body.classList.add("clean-style");
+            }
+
+            // Dark/Light
+            const savedMode = localStorage.getItem("darkMode");
+            if (savedMode === "light") {
+                document.body.classList.add("light-mode");
+            }
+
+            // Theme
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme && themes.includes(savedTheme)) {
+                document.body.classList.add(savedTheme);
+                themeIndex = themes.indexOf(savedTheme);
+            }
+        });
+
+        settingsBtn.addEventListener("click", () => {
+            settingsPopup.style.display = "flex";
+        });
+        settingsClose.addEventListener("click", () => {
+            settingsPopup.style.display = "none";
+        });
+
+        document.querySelectorAll(".style-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.body.classList.remove("fun-style", "clean-style");
+                if (btn.dataset.style === "fun") {
+                    document.body.classList.add("fun-style");
+                    localStorage.setItem("chatStyle", "fun");
+                } else if (btn.dataset.style === "clean") {
+                    document.body.classList.add("clean-style");
+                    localStorage.setItem("chatStyle", "clean");
+                } else {
+                    localStorage.removeItem("chatStyle");
+                }
+                settingsPopup.style.display = "none";
             });
         });
     </script>
