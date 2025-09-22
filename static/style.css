@@ -264,16 +264,64 @@ body.sunset .bot { background: linear-gradient(135deg, #ff9966, #ff5e62); }
 }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE (Improved Mobile Layout)
    ============================================================ */
 @media (max-width: 768px) {
-    .chat-container { border-radius: 0; width: 100%; max-width: 100%; }
-    .message { font-size: 18px; padding: 14px 18px; }
-    .chat-input textarea { font-size: 17px; padding: 14px; }
-    .chat-input button { font-size: 17px; padding: 14px 22px; }
-    .survey-box { max-width: 95%; padding: 26px; }
-    .survey-box input { font-size: 16px; padding: 14px; }
-    .survey-buttons button { font-size: 16px; padding: 14px 22px; }
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .chat-container {
+        border-radius: 16px;
+        width: 95%;
+        max-width: 95%;
+        height: auto;
+        max-height: 90vh;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .chat-messages {
+        max-height: 60vh;
+        padding: 12px;
+        font-size: 17px;
+    }
+
+    .message {
+        font-size: 17px;
+        padding: 14px 18px;
+    }
+
+    .chat-input textarea {
+        font-size: 17px;
+        padding: 14px;
+    }
+
+    .chat-input button {
+        font-size: 17px;
+        padding: 14px 22px;
+    }
+
+    .survey-box {
+        max-width: 95%;
+        padding: 26px;
+    }
+
+    .survey-box input {
+        font-size: 16px;
+        padding: 14px;
+    }
+
+    .survey-buttons button {
+        font-size: 16px;
+        padding: 14px 22px;
+    }
 }
 
 /* ============================================================

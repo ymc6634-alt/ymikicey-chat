@@ -84,7 +84,8 @@
 
         <!-- Input -->
         <div class="chat-input">
-            <button id="emoji-btn">😊</button>
+            <!-- 🎤 Microphone button instead of emoji -->
+            <button id="mic-btn">🎤</button>
             <textarea id="message-input" placeholder="Type a message..." rows="1"></textarea>
             <button id="send-btn">Enter</button>
         </div>
@@ -94,6 +95,8 @@
     <script>
         let mode = "chat";
         let isCreator = false;
+        let recognizing = false;
+        let recognition;
 
         const chatBtn = document.getElementById("chat-mode");
         const imgBtn = document.getElementById("image-mode");
@@ -105,6 +108,43 @@
         const sendBtn = document.getElementById("send-btn");
         const messageInput = document.getElementById("message-input");
         const chatMessages = document.getElementById("chat-messages");
+        const micBtn = document.getElementById("mic-btn");
+
+        /* ---------- Speech Recognition Setup ---------- */
+        if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = "en-US";
+
+            recognition.onstart = () => {
+                recognizing = true;
+                micBtn.textContent = "🎙️"; // active icon
+            };
+
+            recognition.onend = () => {
+                recognizing = false;
+                micBtn.textContent = "🎤"; // reset
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                messageInput.value += transcript + " ";
+            };
+
+            micBtn.addEventListener("click", () => {
+                if (recognizing) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+        } else {
+            micBtn.disabled = true;
+            micBtn.textContent = "❌";
+            console.warn("Speech Recognition not supported in this browser.");
+        }
 
         /* ---------- Mode Toggle ---------- */
         chatBtn.addEventListener("click", () => {
@@ -295,15 +335,6 @@
             const newTheme = themes[themeIndex];
             document.body.classList.add(newTheme);
             localStorage.setItem("theme", newTheme);
-        });
-
-        /* ---------- Emoji Picker ---------- */
-        const emojiBtn = document.getElementById("emoji-btn");
-        emojiBtn.addEventListener("click", () => {
-            const emojis = ["😀","😂","😍","🤔","😎","🔥","👍","🎉","💡","🤖"];
-            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-            messageInput.value += emoji;
-            messageInput.focus();
         });
 
         /* ---------- Sound ---------- */
